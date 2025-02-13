@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ocean Jump</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            background-color: #001e3c;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Press Start 2P', cursive;
+            color: #fff;
+        }
+        
+        #gameContainer {
+            position: relative;
+        }
+        
+        canvas {
+            border: 2px solid #4fc3f7;
+            box-shadow: 0 0 20px rgba(79, 195, 247, 0.5);
+            border-radius: 10px;
+        }
+        
+        #ui {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+        
+        /* Buton Stilleri */
+        #pauseBtn {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            margin: 0;
+        }
+        
+        #marketBtn {
+            background: rgba(0, 0, 0, 0.7);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            margin: 0;
+        }
+        
+        .score-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 10px 15px;
+            border-radius: 15px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .score-label {
+            font-size: 0.6em;
+            color: #aaa;
+        }
+        
+        .score-value {
+            font-size: 1.2em;
+            color: #fff;
+            text-shadow: 0 0 5px #fff;
+        }
+        
+        .button {
+            background: transparent;
+            border: 2px solid #fff;
+            color: #fff;
+            padding: 8px 15px;
+            font-family: 'Press Start 2P', cursive;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-size: 0.7em;
+            border-radius: 15px;
+            text-shadow: 0 0 5px #fff;
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+        
+        .button:hover {
+            background: #fff;
+            color: #000;
+            transform: scale(1.05);
+        }
+        
+        /* Market Stilleri */
+        .market-panel {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 20px;
+            border-radius: 20px;
+            border: 2px solid #fff;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+            z-index: 1000;
+            min-width: 300px;
+        }
+        
+        .market-title {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #fff;
+            text-shadow: 0 0 10px #fff;
+            font-size: 1.5em;
+        }
+        
+        .market-items {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .market-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .market-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .market-item.owned {
+            border: 2px solid #4CAF50;
+        }
+        
+        .market-item-name {
+            color: #fff;
+            font-size: 0.8em;
+            margin: 5px 0;
+        }
+        
+        .market-item-price {
+            color: #aaa;
+            font-size: 0.7em;
+        }
+        
+        .close-market {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            color: #fff;
+            cursor: pointer;
+            font-size: 1.2em;
+            padding: 5px;
+        }
+        
+        .close-market:hover {
+            color: #ff0055;
+        }
+        
+        /* Uyarı Mesajı Stilleri */
+        .market-alert {
+            position: fixed;
+            top: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: #fff;
+            padding: 15px 30px;
+            border-radius: 30px;
+            border: 2px solid #fff;
+            font-size: 0.8em;
+            z-index: 1001;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .market-alert.fade-out {
+            animation: fadeOut 0.5s ease-out forwards;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translate(-50%, -20px);
+                opacity: 0;
+            }
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                transform: translate(-50%, -20px);
+            }
+        }
+        
+        #gameOver, #startScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px;
+            border-radius: 20px;
+            border: 2px solid #fff;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.2);
+            width: 80%;
+        }
+        
+        #gameOver {
+            display: none;
+        }
+        
+        .screen-title {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            color: #4fc3f7;
+            text-shadow: 0 0 15px rgba(79, 195, 247, 0.7);
+            animation: waves 2s ease-in-out infinite;
+        }
+
+        .title-ocean {
+            color: #81d4fa;
+        }
+
+        @keyframes waves {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .instructions {
+            background: rgba(0, 30, 60, 0.8);
+            padding: 20px 30px;
+            border-radius: 15px;
+            border: 2px solid #4fc3f7;
+            margin: 20px 0;
+            line-height: 1.8;
+            font-size: 0.9em;
+            box-shadow: 0 0 15px rgba(79, 195, 247, 0.3);
+        }
+
+        .control-key {
+            background: #4fc3f7;
+            color: #001e3c;
+            padding: 5px 10px;
+            border-radius: 5px;
+            margin: 0 5px;
+            font-size: 0.8em;
+        }
+
+        .game-tip {
+            color: #81d4fa;
+            font-size: 0.8em;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        .blink {
+            animation: blink 1.5s infinite;
+        }
+        
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.3; }
+            100% { opacity: 1; }
+        }
+        
+        #highScore {
+            margin: 15px 0;
+            color: #aaa;
+            font-size: 0.8em;
+        }
+        
+        /* Dokunmatik Kontroller */
+        #touchControls {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            right: 0;
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            pointer-events: none;
+        }
+        
+        .touch-button {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: white;
+            pointer-events: auto;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .touch-button:active {
+            background: rgba(255, 255, 255, 0.3);
+            transform: scale(0.95);
+        }
+        
+        /* Mobil cihazlarda butonları göster */
+        @media (hover: none) and (pointer: coarse) {
+            #touchControls {
+                display: flex;
+            }
+        }
+        
+        /* Masaüstünde butonları gizle */
+        @media (hover: hover) {
+            #touchControls {
+                display: none;
+            }
+        }
+        
+        /* Kredi yazısı animasyonu */
+        @keyframes glowPulse {
+            0% {
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+                transform: translateY(-50%) scale(1);
+            }
+            50% {
+                text-shadow: 0 0 20px rgba(255, 255, 255, 0.6),
+                             0 0 30px rgba(255, 255, 255, 0.4),
+                             0 0 40px rgba(255, 255, 255, 0.2);
+                transform: translateY(-50%) scale(1.05);
+            }
+            100% {
+                text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+                transform: translateY(-50%) scale(1);
+            }
+        }
+
+        @keyframes floatAnimation {
+            0%, 100% {
+                transform: translateY(-50%) translateX(0);
+            }
+            50% {
+                transform: translateY(-50%) translateX(5px);
+            }
+        }
+
+        /* Kredi yazısı stili */
+        .credit-text {
+            font-family: 'Courier New', monospace;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 24px;
+            position: absolute;
+            left: calc(50% + 80px);
+            top: 50%;
+            letter-spacing: 2px;
+            font-weight: bold;
+            animation: glowPulse 2s infinite ease-in-out,
+                       floatAnimation 3s infinite ease-in-out;
+        }
+
+        .credit-text:hover {
+            animation: none;
+            transform: translateY(-50%) scale(1.1);
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8),
+                         0 0 30px rgba(255, 255, 255, 0.6),
+                         0 0 40px rgba(255, 255, 255, 0.4);
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        
+        <div id="ui">
+            <button id="pauseBtn" class="button">Pause</button>
+            <div class="score-container">
+                <span class="score-label">SCORE</span>
+                <span id="score" class="score-value">0</span>
+            </div>
+            <button id="marketBtn" class="button">Market</button>
+        </div>
+        
+        <div id="touchControls">
+            <div id="leftBtn" class="touch-button">←</div>
+            <div id="rightBtn" class="touch-button">→</div>
+        </div>
+        
+        <div id="marketPanel" class="market-panel">
+            <h2 class="market-title">MARKET</h2>
+            <button class="close-market">×</button>
+            <div class="market-items">
+                <!-- Market items will be added by JavaScript -->
+            </div>
+        </div>
+        
+        <div id="startScreen">
+            <h1 class="screen-title">
+                <span class="title-ocean">OCEAN</span> JUMP
+            </h1>
+            <div class="instructions">
+                <div>Controls:</div>
+                <div><span class="control-key">←</span> <span class="control-key">→</span> Move left/right</div>
+                <div><span class="control-key">P</span> Pause game</div>
+                <div><span class="control-key">M</span> Open shop</div>
+                <div class="game-tip">Collect points to unlock sea creatures!</div>
+            </div>
+            <div id="highScore" style="color: #4fc3f7; font-size: 1.2em; margin-top: 20px;">HIGH SCORE: 0</div>
+            <div style="position: relative; display: inline-block;">
+                <button id="startBtn" class="button blink">START</button>
+                <span class="credit-text">@ouzmd</span>
+            </div>
+        </div>
+        
+        <div id="gameOver">
+            <h2 class="screen-title">GAME OVER</h2>
+            <div class="score-container">
+                <span class="score-label">SCORE</span>
+                <span id="finalScore" class="score-value">0</span>
+            </div>
+            <button id="restartBtn" class="button">PLAY AGAIN</button>
+        </div>
+    </div>
+    <script src="game.js"></script>
+    <script src="market.js"></script>
+</body>
+</html>
